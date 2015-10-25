@@ -9,4 +9,4 @@ Seed dla openGL
 5. `cmake ..`
 6. open solution & build
 7. `sudo chmod +x build/launch-*`
-8. `./build/launch-YOUR_PREFERENCE*`
+8. `./build/launch-YOUR_PREFERENCE`
