@@ -1,0 +1,2 @@
+# OpenGLStarter
+Seed dla openGL
