@@ -54,7 +54,7 @@ void geoToVertices(std::vector<geo> &cord, std::vector<GLfloat> & vertices){
 		geo c = cord[i];
 		vertices.push_back(c.x);
 		vertices.push_back(c.y);
-		vertices.push_back(0.0f);
+		vertices.push_back(float(i) / float(cord.size()));
 	}
 }
 
@@ -118,7 +118,7 @@ int main( void )
 
 	// Create and compile our GLSL program from the shaders
 	GLuint programID = LoadShaders( "SimpleVertexShader.vertexshader", "SimpleFragmentShader.fragmentshader" );
-
+	GLint uni_cameras = glGetUniformLocation(programID, "CameraS");
 	geoToVertices(cord, vertices);
 	for (int i = 0; i < vertices.size(); i++) fprintf(stdout, "\nv - %f", vertices[i]);
 	static const GLfloat * g_vertex_buffer_data = &vertices[0];
@@ -128,10 +128,18 @@ int main( void )
 	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*vertices.size(), g_vertex_buffer_data, GL_STATIC_DRAW);
 
+
+	// zmienne
+	bool key_down[500] = { 0 };
+	bool key_used[500] = { 0 };
+	vec2 kamera(0.0f, 0.0f);
+	GLfloat zoom = 1.0f;
+
 	do{
+		if (uni_cameras != -1) glUniform3f(uni_cameras, kamera.x, kamera.y, zoom);
 
 		// Clear the screen
-		glClear( GL_COLOR_BUFFER_BIT );
+		glClear(GL_COLOR_BUFFER_BIT);
 
 		// Use our shader
 		glUseProgram(programID);
@@ -146,7 +154,7 @@ int main( void )
 			GL_FALSE,           // normalized?
 			0,                  // stride
 			(void*)0            // array buffer offset
-		);
+			);
 
 		// Draw the PATH
 		glDrawArrays(GL_LINE_STRIP, 0, cord.size()); // 3 indices starting at 0 -> 1 triangle
@@ -156,6 +164,49 @@ int main( void )
 		// Swap buffers
 		glfwSwapBuffers(window);
 		glfwPollEvents();
+	
+		// keyboard
+		for (int i = 0; i < 500; i++){
+			if (glfwGetKey(window, i) == GLFW_PRESS){
+				key_down[i] = true && !key_used[i];
+			}
+			else {
+				key_down[i] = false;
+				key_used[i] = false;
+			}
+		}
+		//check other keys
+		if (key_down[GLFW_KEY_MINUS]){
+			key_used[GLFW_KEY_MINUS] = true;
+			if (zoom > 0.2f) zoom /= 2.0f;
+		}
+		else if (key_down[GLFW_KEY_EQUAL]){
+			key_used[GLFW_KEY_EQUAL] = true;
+			if (zoom < 2.0f) zoom *= 2.0f;
+		}
+
+		if (key_down[GLFW_KEY_UP]){
+			key_used[GLFW_KEY_UP] = true;
+			kamera.y -= 0.1f;
+		}
+		if (key_down[GLFW_KEY_DOWN]){
+			key_used[GLFW_KEY_DOWN] = true;
+			kamera.y += 0.1f;
+		}
+		if (key_down[GLFW_KEY_LEFT]){
+			key_used[GLFW_KEY_LEFT] = true;
+			kamera.x += 0.1f;
+		}
+		if (key_down[GLFW_KEY_RIGHT]){
+			key_used[GLFW_KEY_RIGHT] = true;
+			kamera.x -= 0.1f;
+		}
+		if (key_down[GLFW_KEY_R]){
+			key_used[GLFW_KEY_RIGHT] = true;
+			kamera.x = 0.0f;
+			kamera.y = 0.0f;
+			zoom = 1.0f;
+		}
 
 	} // Check if the ESC key was pressed or the window was closed
 	while( glfwGetKey(window, GLFW_KEY_ESCAPE ) != GLFW_PRESS &&
